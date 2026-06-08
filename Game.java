@@ -2,8 +2,11 @@ import java.awt.*;
 
 public class Game extends BaseFrame {
 
-    static final int VIEW_W = 600;
-    static final int VIEW_H = 400;
+    static final int GAME_W = 600;
+    static final int GAME_H = 400;
+
+    static final int SCREEN_W = 725;
+    static final int SCREEN_H = 500;
 
     static final int TILE  = 40;
     static final int MAP_W = 15;
@@ -25,10 +28,12 @@ public class Game extends BaseFrame {
         {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
     };
 
-    static final int    NUM_RAYS = VIEW_W;
+    static final int    NUM_RAYS = GAME_W;
     static final double FOV      = Math.toRadians(60);
 
     Player player = new Player(TILE * 2 + TILE/2, TILE * 2 + TILE/2);
+    Image handImage = loadImage("hand.png");
+    boolean shooting = false;
     int prevMx = -1;
 
     double[] rayDist = new double[NUM_RAYS];
@@ -36,7 +41,7 @@ public class Game extends BaseFrame {
     double[] rayEndY = new double[NUM_RAYS];
 
     public Game() {
-        super("Catacombs", VIEW_W, VIEW_H);
+        super("Catacombs", SCREEN_W, SCREEN_H);
     }
 
     @Override
@@ -55,7 +60,19 @@ public class Game extends BaseFrame {
         }
 
         castRays();
+        shoot();
+
     }
+
+    public void shoot() {
+        if (keys[32]) {
+            shooting = true;
+        }else {
+            shooting = false;
+        }
+    }
+
+    
 
     void castRays() {
         for (int i = 0; i < NUM_RAYS; i++) {
@@ -95,23 +112,32 @@ public class Game extends BaseFrame {
     public void draw(Graphics g) {
         // ceiling
         g.setColor(new Color(50, 50, 50));
-        g.fillRect(0, 0, VIEW_W, VIEW_H/2);
+        g.fillRect(0, 0, GAME_W, GAME_H/2);
         // floor
         g.setColor(new Color(100, 100, 100));
-        g.fillRect(0, VIEW_H/2, VIEW_W, VIEW_H/2);
+        g.fillRect(0, GAME_H/2, GAME_W, GAME_H/2);
 
-        // wall slices
+        // walls
         for (int i = 0; i < NUM_RAYS; i++) {
             if (rayDist[i] == 0) continue;
-            int sliceH = Math.min(VIEW_H, (int)(VIEW_H * TILE / rayDist[i]));
-            int top    = VIEW_H/2 - sliceH/2;
+            int sliceH = Math.min(GAME_H, (int)(GAME_H * TILE / rayDist[i]));
+            int top = GAME_H/2 - sliceH/2;
             int bright = Math.max(40, 255 - (int)(rayDist[i] * 0.5));
             g.setColor(new Color(bright, bright, bright));
             g.fillRect(i, top, 1, sliceH);
         }
 
-        // g.drawImage(handImage, VIEW_W/2 - hw/2, VIEW_H - hh, hw, hh, null);
+        // hand
+        if(shooting) {
+            g.drawImage(handImage, GAME_W/2 - handImage.getWidth(rootPane)/2, GAME_H - handImage.getHeight(rootPane)+1, handImage.getWidth(rootPane), handImage.getHeight(rootPane), null);
+        }
+
+        // gui
+        g.setColor(Color.red);
+        g.fillRect(0, GAME_H, SCREEN_W+10, SCREEN_H - GAME_H);
     }
 
-    public static void main(String[] args) { new Game(); }
+    public static void main(String[] args) {
+        new Game();
+    }
 }
