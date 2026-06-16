@@ -1,12 +1,12 @@
-import java.awt.*;
-
 public class Player {
     double x, y, angle;
     int health = 100;
-    public Rectangle playerBounds = new Rectangle((int)x - 10, (int)y - 10, 20, 20);
-    final double MOVE_SPEED = 2.5;
-    final double TURN_SPEED = 0.115;
-    final int LEFT = 37, UP = 38, RIGHT = 39, DOWN = 40;
+    int maxHealth = 100;
+    int potions = 5;
+
+    static final double MOVE_SPEED = 2.5;
+    static final double TURN_SPEED = 0.115;
+    static final int LEFT = 37, UP = 38, RIGHT = 39, DOWN = 40;
 
     public Player(double x, double y) {
         this.x = x;
@@ -25,11 +25,20 @@ public class Player {
             x -= MOVE_SPEED * Math.cos(angle);
             y -= MOVE_SPEED * Math.sin(angle);
         }
-        playerBounds.x = (int)x - 10;
-        playerBounds.y = (int)y - 10;
     }
 
-    public boolean collide(Rectangle wall) {
-        return playerBounds.intersects(wall);
+    public void takeDamage(int dmg) {
+        health = Math.max(0, health - dmg);
+    }
+
+    public void usePotion() {
+        if (potions > 0 && health < maxHealth) {
+            potions--;
+            health = Math.min(maxHealth, health + 10);
+        }
+    }
+
+    public boolean isAlive() {
+        return health > 0;
     }
 }

@@ -1,59 +1,64 @@
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 public class Orc {
     double x, y;
-    int health = 80;
-    boolean isAttacking = false;
-    final double MOVE_SPEED = 2.4;
-    final int SEARCH_RADIUS = 10;
-    final int ATTACK_RADIUS = 2;
+    int health;
+    boolean alive;
+    int mode;
+    private int frameCount;
+    private int attackTimer;
 
-    ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    static final int MAX_HEALTH = 80;
+    static final double SPEED = 1.5;
+    static final double CHASE_RADIUS = 400.0;
+    static final double ATTACK_RADIUS = 32.0;
+    static final int ATTACK_DAMAGE = 10;
+    static final int ATTACK_COOLDOWN = 30;
 
-    public Orc(int x, int y) {
+    public Orc(double x, double y) {
         this.x = x;
         this.y = y;
+        this.health = MAX_HEALTH;
+        this.alive = true;
+        this.frameCount = 0;
+        this.attackTimer = 0;
     }
 
-    boolean canSee(Player player) {
-        if (((Math.abs(x - player.x)) * (Math.abs(x - player.x))) + ((Math.abs(y - player.y)) * (Math.abs(y - player.y))) <= SEARCH_RADIUS*SEARCH_RADIUS) {
-            return true;
-        } else {
-            return false;
-        }
-    }
+    public void update(Player player, int[][] map, int mapW, int mapH) {
+        if (!alive) return;
+        if (attackTimer > 0) attackTimer--;
+        frameCount++;
 
-    boolean canAttack(Player player) {
-        if (((Math.abs(x - player.x)) * (Math.abs(x - player.x))) + ((Math.abs(y - player.y)) * (Math.abs(y - player.y))) <= ATTACK_RADIUS*ATTACK_RADIUS) {
-            return true;
-        } else {
-            return false;
-        }
-    }
+        double dx = player.x - x;
+        double dy = player.y - y;
+        double dist = Math.sqrt(dx * dx + dy * dy);
 
-    void attack(Player player) {
-        if (canAttack(player)) {
-            isAttacking = true;
-            Runnable task = () -> player.health -= 10;
-            scheduler.scheduleAtFixedRate(task, 0, 2, TimeUnit.SECONDS);
-        }else {
-            Runnable task = () -> System.out.println("random");
-            scheduler.scheduleAtFixedRate(task, 0, 0, TimeUnit.SECONDS);
-
-        }
-
-    }
-
-    void move(Player player) {
-        if (canSee(player)) {
-            if (!isAttacking) {
-                // move to player
+        if (dist < ATTACK_RADIUS && attackTimer == 0) {
+            player.takeDamage(ATTACK_DAMAGE);
+            attackTimer = ATTACK_COOLDOWN;
+        } else if (dist < CHASE_RADIUS) {
+            double nx, ny;
+            if (mode == 0) {
+                nx = x + (dx / dist) * SPEED;
+                ny = y + (dy / dist) * SPEED;
+            } else {
+                double toAngle = Math.atan2(dy, dx);
+                double perpAngle = toAngle + Math.PI / 2;
+                double strafe = Math.sin(frameCount * 0.1);
+                nx = x + Math.cos(toAngle) * SPEED * 0.6
+                      + Math.cos(perpAngle) * SPEED * 0.4 * strafe;
+                ny = y + Math.sin(toAngle) * SPEED * 0.6
+                      + Math.sin(perpAngle) * SPEED * 0.4 * strafe;
+            }
+            int tx = (int) (nx / 40);
+            int ty = (int) (ny / 40);
+            if (tx >= 0 && tx < mapW && ty >= 0 && ty < mapH && map[ty][tx] != 1) {
+                x = nx;
+                y = ny;
             }
         }
     }
 
-
-    
+    public void takeDamage(int dmg) {
+        health -= dmg;
+        if (health <= 0) alive = false;
+    }
 }
