@@ -14,8 +14,7 @@ public class Game extends BaseFrame {
     static final int BOTTOM_H = 80;
     static final int SCREEN_W = GAME_W + RIGHT_W;
     static final int SCREEN_H = GAME_H + BOTTOM_H;
-    static final int PERSON_H = 140;
-    static final int HEALTH_W = GAME_W / 2;
+
 
     static final int TILE  = 40;
     static final int MAP_W = 30;
@@ -91,7 +90,7 @@ public class Game extends BaseFrame {
     Image personImage = loadImage("Sprites/person.png");
     Image potionImage = loadImage("Sprites/potion.png");
     Image boomImage   = loadImage("Sprites/boom.png");
-    Image endScreenImage = loadImage("endScreen.png");
+
     Image[] orcWalkFrames        = new Image[4];
     Image[] orcAttackFrames      = new Image[4];
     Image[] portalFrames         = new Image[4];
@@ -139,7 +138,7 @@ public class Game extends BaseFrame {
         tickCount = 0;
         score = 0;
         orcsKilled = 0;
-        gameSong = new Sound("Too Hot to Handle.wav");
+        gameSong = new Sound("Too Hot to Handle.mid");
         gameSong.play();
     }
 
@@ -288,10 +287,9 @@ public class Game extends BaseFrame {
         if (spaceDown) {
             attackCharge = Math.min(100, attackCharge + 2);
             spaceReleaseCount = 0;
-        } else if (spaceWasDown) {
-            // debounce: brief ghosting drops shouldn't fire early
+        } else if (attackCharge > 0) {
             spaceReleaseCount++;
-            if (spaceReleaseCount > 3 && attackCharge > 0) {
+            if (spaceReleaseCount > 3) {
                 int damage = attackCharge < 25 ? 25
                            : attackCharge < 50 ? 50
                            : attackCharge < 75 ? 80
@@ -299,8 +297,6 @@ public class Game extends BaseFrame {
                 fireballs.add(new Fireball(player.x, player.y, player.angle, damage, weakFireballFrames, strongFireballFrames));
                 attackCharge = 0;
             }
-        } else {
-            attackCharge = 0;
         }
         spaceWasDown = spaceDown;
 
@@ -841,6 +837,11 @@ public class Game extends BaseFrame {
         // charge bar background
         g.setColor(new Color(15, 12, 10));
         g.fillRoundRect(barX, barTop, barW, barH, 4, 4);
+
+        // boom image drawn behind the navy fill so it shows through as charge builds
+        if (boomImage != null && barH > 0) {
+            g.drawImage(boomImage, barX + 1, barTop + 1, barW - 2, barH - 2, null);
+        }
 
         // solid navy fill from top (recedes as charge builds)
         int fillH = barH * attackCharge / 100;
